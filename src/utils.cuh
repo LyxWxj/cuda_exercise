@@ -51,6 +51,24 @@ struct SubOp {
   __host__ __device__ static T apply(T a, T b) { return a - b; }
 };
 
+struct MinOp {
+  template<typename T>
+  __host__ __device__ static T apply(T a, T b) { return a < b ? a : b; }
+};
+template<>
+__host__ __device__ inline half MinOp::apply<half>(half a, half b) {
+  return __hmin(a, b);
+}
+
+struct MaxOp {
+  template<typename T>
+  __host__ __device__ static T apply(T a, T b) { return a > b ? a : b; }
+};
+template<>
+__host__ __device__ inline half MaxOp::apply<half>(half a, half b) {
+  return __hmax(a, b);
+}
+
 // In-place ops: mutate input, return void. Used with 1-arg TNApply / Apply*(A).
 struct IncreaseOp {
   template<typename T>

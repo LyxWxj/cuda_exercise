@@ -53,3 +53,9 @@ add_executable(test_hardshrink hardshrink_test.cu)
 target_link_libraries(test_hardshrink PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
 set_target_properties(test_hardshrink PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 add_test(NAME Hardshrink COMMAND test_hardshrink)
+
+# --- block_all_reduce + dot_product tests ---
+add_executable(test_reduce block_all_reduce_test.cu)
+target_link_libraries(test_reduce PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
+set_target_properties(test_reduce PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_test(NAME Reduce COMMAND test_reduce)
