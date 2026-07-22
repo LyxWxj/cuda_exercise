@@ -54,7 +54,7 @@ struct fp8_e4m3_16 {}; struct fp8_e5m2_16 {}; struct int8_16 {};
 // ============================================================
 template<typename InputT, typename AccT, int VecWidth, int NUM_THREADS>
 __global__ void block_all_reduce_sum_kernel(
-    typename ReduceTraits<InputT, AccT>::ptr_type* a, AccT* y, int N) {
+  typename ReduceTraits<InputT, AccT>::ptr_type* a, AccT* y, int N) {
   int tid = threadIdx.x;
   int idx = (blockIdx.x * NUM_THREADS + tid) * VecWidth;
   constexpr int NUM_WARPS = (NUM_THREADS + WARP_SIZE - 1) / WARP_SIZE;
@@ -62,7 +62,7 @@ __global__ void block_all_reduce_sum_kernel(
 
   // 1. Load VecWidth elements and reduce to single AccT
   AccT sum = (idx + VecWidth - 1 < N) ? ReduceTraits<InputT, AccT>::load(&a[idx])
-                                      : ReduceTraits<InputT, AccT>::zero();
+    : ReduceTraits<InputT, AccT>::zero();
 
   int warp = tid / WARP_SIZE;
   int lane = tid % WARP_SIZE;
@@ -111,7 +111,7 @@ template<> struct ReduceTraits<float4, float> {
   __device__ static float load_op(float* a, float* b) {
     float4 va = FLOAT4(a[0]), vb = FLOAT4(b[0]);
     return Op::apply(va.x, vb.x) + Op::apply(va.y, vb.y)
-         + Op::apply(va.z, vb.z) + Op::apply(va.w, vb.w);
+      + Op::apply(va.z, vb.z) + Op::apply(va.w, vb.w);
   }
 };
 
@@ -392,34 +392,34 @@ template<> struct ReduceTraits<int8_16, int32_t> {
   }
 
 // --- f32 ---
-INSTANTIATE_REDUCE(block_all_reduce_sum_f32_f32_kernel,       float,           float,    1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_f32x4_f32_kernel,     float4,          float,    4, 64);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f32_f32_kernel, float, float, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f32x4_f32_kernel, float4, float, 4, 64);
 
 // --- f16 ---
-INSTANTIATE_REDUCE(block_all_reduce_sum_f16_f16_kernel,       half,            half,     1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_f16_f32_kernel,       half,            float,    1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_f16x2_f16_kernel,     half2,           half,     2, 128);
-INSTANTIATE_REDUCE(block_all_reduce_sum_f16x2_f32_kernel,     half2,           float,    2, 128);
-INSTANTIATE_REDUCE(block_all_reduce_sum_f16x8_pack_f16_kernel, half8,          half,     8, 32);
-INSTANTIATE_REDUCE(block_all_reduce_sum_f16x8_pack_f32_kernel, half8,          float,    8, 32);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f16_f16_kernel, half, half, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f16_f32_kernel, half, float, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f16x2_f16_kernel, half2, half, 2, 128);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f16x2_f32_kernel, half2, float, 2, 128);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f16x8_pack_f16_kernel, half8, half, 8, 32);
+INSTANTIATE_REDUCE(block_all_reduce_sum_f16x8_pack_f32_kernel, half8, float, 8, 32);
 
 // --- bf16 ---
-INSTANTIATE_REDUCE(block_all_reduce_sum_bf16_bf16_kernel,     __nv_bfloat16,  __nv_bfloat16, 1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_bf16_f32_kernel,      __nv_bfloat16,  float,    1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x2_bf16_kernel,   __nv_bfloat162, __nv_bfloat16, 2, 128);
-INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x2_f32_kernel,    __nv_bfloat162, float,    2, 128);
-INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x8_pack_bf16_kernel, bf16_8,      __nv_bfloat16, 8, 32);
-INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x8_pack_f32_kernel,  bf16_8,      float,    8, 32);
+INSTANTIATE_REDUCE(block_all_reduce_sum_bf16_bf16_kernel, __nv_bfloat16, __nv_bfloat16, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_bf16_f32_kernel, __nv_bfloat16, float, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x2_bf16_kernel, __nv_bfloat162, __nv_bfloat16, 2, 128);
+INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x2_f32_kernel, __nv_bfloat162, float, 2, 128);
+INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x8_pack_bf16_kernel, bf16_8, __nv_bfloat16, 8, 32);
+INSTANTIATE_REDUCE(block_all_reduce_sum_bf16x8_pack_f32_kernel, bf16_8, float, 8, 32);
 
 // --- fp8 ---
-INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e4m3_f16_kernel,        __nv_fp8_storage_t, half, 1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e5m2_f16_kernel,        __nv_fp8_storage_t, half, 1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e4m3x16_pack_f16_kernel, fp8_e4m3_16,       half, 16, 16);
-INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e5m2x16_pack_f16_kernel, fp8_e5m2_16,       half, 16, 16);
+INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e4m3_f16_kernel, __nv_fp8_storage_t, half, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e5m2_f16_kernel, __nv_fp8_storage_t, half, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e4m3x16_pack_f16_kernel, fp8_e4m3_16, half, 16, 16);
+INSTANTIATE_REDUCE(block_all_reduce_sum_fp8_e5m2x16_pack_f16_kernel, fp8_e5m2_16, half, 16, 16);
 
 // --- int8 ---
-INSTANTIATE_REDUCE(block_all_reduce_sum_i8_i32_kernel,        int8_t,          int32_t,  1, 256);
-INSTANTIATE_REDUCE(block_all_reduce_sum_i8x16_pack_i32_kernel, int8_16,        int32_t,  16, 16);
+INSTANTIATE_REDUCE(block_all_reduce_sum_i8_i32_kernel, int8_t, int32_t, 1, 256);
+INSTANTIATE_REDUCE(block_all_reduce_sum_i8x16_pack_i32_kernel, int8_16, int32_t, 16, 16);
 
 // ============================================================
 // Generic block binary-reduce sum kernel
@@ -432,16 +432,16 @@ INSTANTIATE_REDUCE(block_all_reduce_sum_i8x16_pack_i32_kernel, int8_16,        i
 // ============================================================
 template<typename InputT, typename AccT, typename ElemOp, int VecWidth, int NUM_THREADS>
 __global__ void block_binary_reduce_sum_kernel(
-    typename ReduceTraits<InputT, AccT>::ptr_type* a,
-    typename ReduceTraits<InputT, AccT>::ptr_type* b, AccT* y, int N) {
+  typename ReduceTraits<InputT, AccT>::ptr_type* a,
+  typename ReduceTraits<InputT, AccT>::ptr_type* b, AccT* y, int N) {
   int tid = threadIdx.x;
   int idx = (blockIdx.x * NUM_THREADS + tid) * VecWidth;
   constexpr int NUM_WARPS = (NUM_THREADS + WARP_SIZE - 1) / WARP_SIZE;
   __shared__ AccT reduce_smem[NUM_WARPS];
 
   AccT sum = (idx + VecWidth - 1 < N)
-                 ? ReduceTraits<InputT, AccT>::template load_op<ElemOp>(&a[idx], &b[idx])
-                 : ReduceTraits<InputT, AccT>::zero();
+    ? ReduceTraits<InputT, AccT>::template load_op<ElemOp>(&a[idx], &b[idx])
+    : ReduceTraits<InputT, AccT>::zero();
 
   int warp = tid / WARP_SIZE;
   int lane = tid % WARP_SIZE;
@@ -484,8 +484,8 @@ __global__ void block_binary_reduce_sum_kernel(
   }
 
 // --- dot product: sum(a[i] * b[i]) ---
-INSTANTIATE_BINARY_REDUCE(dot_prod_f32_f32_kernel,        float,          float, MulOp, 1, 256);
-INSTANTIATE_BINARY_REDUCE(dot_prod_f32x4_f32_kernel,      float4,         float, MulOp, 4, 64);
-INSTANTIATE_BINARY_REDUCE(dot_prod_f16_f32_kernel,        half,           float, MulOp, 1, 256);
-INSTANTIATE_BINARY_REDUCE(dot_prod_f16x2_f32_kernel,      half2,          float, MulOp, 2, 128);
-INSTANTIATE_BINARY_REDUCE(dot_prod_f16x8_pack_f32_kernel, half8,          float, MulOp, 8, 32);
+INSTANTIATE_BINARY_REDUCE(dot_prod_f32_f32_kernel, float, float, MulOp, 1, 256);
+INSTANTIATE_BINARY_REDUCE(dot_prod_f32x4_f32_kernel, float4, float, MulOp, 4, 64);
+INSTANTIATE_BINARY_REDUCE(dot_prod_f16_f32_kernel, half, float, MulOp, 1, 256);
+INSTANTIATE_BINARY_REDUCE(dot_prod_f16x2_f32_kernel, half2, float, MulOp, 2, 128);
+INSTANTIATE_BINARY_REDUCE(dot_prod_f16x8_pack_f32_kernel, half8, float, MulOp, 8, 32);

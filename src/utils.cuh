@@ -397,6 +397,67 @@ inline int x_by_y_floor(int x, int y) {
 }
 
 // ============================================================
+// Warp/Block reduce utilities (used by softmax, layer_norm, etc.)
+// ============================================================
+
+template<const int kWarpSize = WARP_SIZE>
+__device__ __forceinline__ float warp_reduce_sum_f32(float val) {
+#pragma unroll
+  for (int mask = kWarpSize >> 1; mask >= 1; mask >>= 1) {
+    val += __shfl_xor_sync(0xffffffff, val, mask);
+  }
+  return val;
+}
+
+template<const int NUM_THREADS = 256>
+__device__ __forceinline__ float block_reduce_sum_f32(float val) {
+  constexpr int NUM_WARPS = (NUM_THREADS + WARP_SIZE - 1) / WARP_SIZE;
+  int warp = threadIdx.x / WARP_SIZE;
+  int lane = threadIdx.x % WARP_SIZE;
+  __shared__ float smem[NUM_WARPS];
+
+  // Step 1: warp-level reduce
+  val = warp_reduce_sum_f32<WARP_SIZE>(val);
+  if (lane == 0) smem[warp] = val;
+  __syncthreads();
+
+  // Step 2: warp 0 reduces all warp partial sums
+  val = (lane < NUM_WARPS) ? smem[lane] : 0.f;
+  if (warp == 0) val = warp_reduce_sum_f32<NUM_WARPS>(val);
+  if (lane == 0) smem[0] = val;
+  __syncthreads();
+
+  // Step 3: broadcast final result to all threads
+  return smem[0];
+}
+
+template<const int kWarpSize = WARP_SIZE>
+__device__ __forceinline__ float warp_reduce_max_f32(float val) {
+#pragma unroll
+  for (int mask = kWarpSize >> 1; mask >= 1; mask >>= 1) {
+    val = max(val, __shfl_xor_sync(0xffffffff, val, mask));
+  }
+  return val;
+}
+
+template<const int NUM_THREADS = 256>
+__device__ __forceinline__ float block_reduce_max_f32(float val) {
+  constexpr int NUM_WARPS = (NUM_THREADS + WARP_SIZE - 1) / WARP_SIZE;
+  int warp = threadIdx.x / WARP_SIZE;
+  int lane = threadIdx.x % WARP_SIZE;
+  __shared__ float smem[NUM_WARPS];
+
+  val = warp_reduce_max_f32<WARP_SIZE>(val);
+  if (lane == 0) smem[warp] = val;
+  __syncthreads();
+  val = (lane < NUM_WARPS) ? smem[lane] : -FLT_MAX;
+  if (warp == 0) val = warp_reduce_max_f32<NUM_WARPS>(val);
+  if (lane == 0) smem[0] = val;
+  __syncthreads();
+  return smem[0];
+}
+
+// ============================================================
 // Kernel class macros — generate a class with static run()
 // that wraps a __global__ kernel launch.
 //

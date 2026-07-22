@@ -59,3 +59,27 @@ add_executable(test_reduce block_all_reduce_test.cu)
 target_link_libraries(test_reduce PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
 set_target_properties(test_reduce PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 add_test(NAME Reduce COMMAND test_reduce)
+
+# --- softmax tests ---
+add_executable(test_softmax softmax_test.cu)
+target_link_libraries(test_softmax PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
+set_target_properties(test_softmax PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_test(NAME Softmax COMMAND test_softmax)
+
+# --- layer_norm tests ---
+add_executable(test_layer_norm layer_norm_test.cu)
+target_link_libraries(test_layer_norm PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
+set_target_properties(test_layer_norm PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_test(NAME LayerNorm COMMAND test_layer_norm)
+
+# --- rms_norm tests ---
+add_executable(test_rms_norm rms_norm_test.cu)
+target_link_libraries(test_rms_norm PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
+set_target_properties(test_rms_norm PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_test(NAME RMSNorm COMMAND test_rms_norm)
+
+# --- nms tests ---
+add_executable(test_nms nms_test.cu)
+target_link_libraries(test_nms PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
+set_target_properties(test_nms PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_test(NAME NMS COMMAND test_nms)
