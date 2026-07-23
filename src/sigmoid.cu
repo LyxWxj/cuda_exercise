@@ -5,6 +5,7 @@
 // Sigmoid kernel implementations: clip + sigmoid = 1/(1+exp(-x))
 // ============================================================
 
+// launch: <<<(N/256, 1, 1), (256, 1, 1)>>>
 __global__ void sigmoid_f32_kernel(float* x, float* y, int N) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < N) {
@@ -14,6 +15,7 @@ __global__ void sigmoid_f32_kernel(float* x, float* y, int N) {
   }
 }
 
+// launch: <<<(N/1024, 1, 1), (256, 1, 1)>>>
 __global__ void sigmoid_f32x4_kernel(float* x, float* y, int N) {
   int idx = 4 * (blockIdx.x * blockDim.x + threadIdx.x);
   float4 reg_x = FLOAT4(x[idx]);
@@ -23,6 +25,7 @@ __global__ void sigmoid_f32x4_kernel(float* x, float* y, int N) {
   if (idx < N) FLOAT4(y[idx]) = reg_y;
 }
 
+// launch: <<<(N/256, 1, 1), (256, 1, 1)>>>
 __global__ void sigmoid_f16_kernel(half* x, half* y, int N) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   const half f = __float2half(1.0f);
@@ -33,6 +36,7 @@ __global__ void sigmoid_f16_kernel(half* x, half* y, int N) {
   }
 }
 
+// launch: <<<(N/512, 1, 1), (256, 1, 1)>>>
 __global__ void sigmoid_f16x2_kernel(half* x, half* y, int N) {
   int idx = (blockIdx.x * blockDim.x + threadIdx.x) * 2;
   const half f = __float2half(1.0f);
@@ -43,6 +47,7 @@ __global__ void sigmoid_f16x2_kernel(half* x, half* y, int N) {
   if ((idx + 0) < N) HALF2(y[idx]) = reg_y;
 }
 
+// launch: <<<(N/2048, 1, 1), (256, 1, 1)>>>
 __global__ void sigmoid_f16x8_kernel(half* x, half* y, int N) {
   int idx = (blockIdx.x * blockDim.x + threadIdx.x) * 8;
   const half f = __float2half(1.0f);
@@ -61,6 +66,7 @@ __global__ void sigmoid_f16x8_kernel(half* x, half* y, int N) {
   if ((idx + 6) < N) HALF2(y[idx + 6]) = reg_y_3;
 }
 
+// launch: <<<(N/2048, 1, 1), (256, 1, 1)>>>
 __global__ void sigmoid_f16x8_pack_kernel(half* x, half* y, int N) {
   int idx = (blockIdx.x * blockDim.x + threadIdx.x) * 8;
   const half f = __float2half(1.0f);

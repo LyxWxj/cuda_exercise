@@ -63,6 +63,10 @@ __global__ void binary_f16x8_kernel(half* a, half* b, half* c, int N) {
 
 // ============================================================
 // Macro: generate 5 kernel class structs for a binary Op.
+// launch: f32/f16 → <<<(N/256, 1, 1), (256, 1, 1)>>>
+//         f32x4   → <<<(N/1024, 1, 1), (256, 1, 1)>>>
+//         f16x2   → <<<(N/512, 1, 1), (256, 1, 1)>>>
+//         f16x8   → <<<(N/2048, 1, 1), (256, 1, 1)>>>
 // ============================================================
 
 #define _BINARY_KERNEL_CLASS(name, Kernel, ElemType, GridExpr)                \

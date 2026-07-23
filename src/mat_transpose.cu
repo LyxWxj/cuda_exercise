@@ -2,6 +2,7 @@
 
 
 // 
+// launch: <<<(row*col/256, 1, 1), (256, 1, 1)>>>
 __global__ void mat_transpose_f32_col2row_kernel(float* x, float* y, const int row, const int col) {
   // x[row][col]->y[col][row]
   const int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -10,6 +11,7 @@ __global__ void mat_transpose_f32_col2row_kernel(float* x, float* y, const int r
     y[global_col * row + global_row] = x[global_idx];
 }
 
+// launch: <<<(row*col/256, 1, 1), (256, 1, 1)>>>
 __global__ void mat_transpose_f32_row2col_kernel(float* x, float* y,
   const int row, const int col) {
   const int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -19,6 +21,7 @@ __global__ void mat_transpose_f32_row2col_kernel(float* x, float* y,
   }
 }
 
+// launch: <<<(row*col/1024, 1, 1), (256, 1, 1)>>>
 __global__ void mat_transpose_f32x4_col2row_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -36,6 +39,7 @@ __global__ void mat_transpose_f32x4_col2row_kernel(float* x, float* y,
   }
 }
 
+// launch: <<<(row*col/1024, 1, 1), (256, 1, 1)>>>
 __global__ void mat_transpose_f32x4_row2col_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -54,6 +58,7 @@ __global__ void mat_transpose_f32x4_row2col_kernel(float* x, float* y,
 }
 
 // work for row == col
+// launch: <<<(col/32, row/32, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32_diagonal2d_kernel(float* x, float* y, int row,
   int col) {
   const int block_y = blockIdx.x;
@@ -65,6 +70,7 @@ __global__ void mat_transpose_f32_diagonal2d_kernel(float* x, float* y, int row,
   }
 }
 
+// launch: <<<(col/32, row/32, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32_col2row2d_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -75,6 +81,7 @@ __global__ void mat_transpose_f32_col2row2d_kernel(float* x, float* y,
   }
 }
 
+// launch: <<<(row/32, col/32, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32_row2col2d_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -85,6 +92,7 @@ __global__ void mat_transpose_f32_row2col2d_kernel(float* x, float* y,
   }
 }
 
+// launch: <<<(col/128, row/32, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32x4_col2row2d_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -98,6 +106,7 @@ __global__ void mat_transpose_f32x4_col2row2d_kernel(float* x, float* y,
     y[(global_x * 4 + 3) * row + global_y] = x_val.w;
   }
 }
+// launch: <<<(row/32, col/128, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32x4_row2col2d_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -114,6 +123,7 @@ __global__ void mat_transpose_f32x4_row2col2d_kernel(float* x, float* y,
   }
 }
 
+// launch: <<<(col/128, row/32, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32x4_shared_col2row2d_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -146,6 +156,7 @@ __global__ void mat_transpose_f32x4_shared_col2row2d_kernel(float* x, float* y,
   }
 }
 
+// launch: <<<(row/32, col/128, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32x4_shared_row2col2d_kernel(float* x, float* y,
   const int row,
   const int col) {
@@ -190,6 +201,7 @@ __global__ void mat_transpose_f32x4_shared_row2col2d_kernel(float* x, float* y,
   }
 }
 
+// launch: <<<(col/128, row/32, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32x4_shared_bcf_col2row2d_kernel(float* x,
   float* y,
   const int row,
@@ -226,6 +238,7 @@ __global__ void mat_transpose_f32x4_shared_bcf_col2row2d_kernel(float* x,
   }
 }
 
+// launch: <<<(row/32, col/128, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32x4_shared_bcf_row2col2d_kernel(float* x,
   float* y,
   const int row,
@@ -271,6 +284,7 @@ __global__ void mat_transpose_f32x4_shared_bcf_row2col2d_kernel(float* x,
   }
 }
 
+// launch: <<<(row/32, col/128, 1), (32, 32, 1)>>>
 __global__ void mat_transpose_f32x4_shared_bcf_merge_write_row2col2d_kernel(
   float* x, float* y, const int row, const int col) {
   const int global_x = blockIdx.x * blockDim.x + threadIdx.x;

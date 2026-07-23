@@ -83,3 +83,9 @@ add_executable(test_nms nms_test.cu)
 target_link_libraries(test_nms PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
 set_target_properties(test_nms PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 add_test(NAME NMS COMMAND test_nms)
+
+# --- rope tests ---
+add_executable(test_rope rope_test.cu)
+target_link_libraries(test_rope PRIVATE GTest::gtest GTest::gtest_main CUDA::cudart)
+set_target_properties(test_rope PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+add_test(NAME RoPE COMMAND test_rope)

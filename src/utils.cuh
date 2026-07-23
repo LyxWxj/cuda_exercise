@@ -11,6 +11,7 @@
 #include <cuda_fp8.hpp>
 #include <thrust/complex.h>
 #include <type_traits>
+#include <mma.h>
 
 #define CUDA_CHECK(call) \
 do {\
@@ -26,12 +27,15 @@ do {\
 #define FLOAT4(value) (reinterpret_cast<float4 *>(&(value))[0])
 #define HALF2(value) (reinterpret_cast<half2 *>(&(value))[0])
 #define BFLOAT2(value) (reinterpret_cast<__nv_bfloat162 *>(&(value))[0])
+#define LDST32BITS(value) (reinterpret_cast<half2 *>(&(value))[0])
+#define LDST64BITS(value) (reinterpret_cast<float2 *>(&(value))[0])
 #define LDST128BITS(value) (reinterpret_cast<float4 *>(&(value))[0])
 #define MAX_EXP_F32 88.3762626647949f
 #define MIN_EXP_F32 -88.3762626647949f
 #define MAX_EXP_F16 __float2half(11.089866488461016f)
 #define MIN_EXP_F16 __float2half(-9.704060527839234f)
-
+#define DEVICE_INLINE __device__ inline
+#define HOST_DEVICE_INLINE __device__ __host__ inline
 struct AddOp {
   template<typename T>
   __host__ __device__ static T apply(T a, T b) { return a + b; }
@@ -229,64 +233,64 @@ template<> struct VecTraits<half2> {
 
 namespace detail {
 
-// --- TN member detection (x, y, z, w) ---
+  // --- TN member detection (x, y, z, w) ---
 
-template<typename TN, typename = void>
-struct has_member_x : std::false_type {};
-template<typename TN>
-struct has_member_x<TN, decltype(static_cast<void>(&TN::x))> : std::true_type {};
+  template<typename TN, typename = void>
+  struct has_member_x : std::false_type {};
+  template<typename TN>
+  struct has_member_x<TN, decltype(static_cast<void>(&TN::x))> : std::true_type {};
 
-template<typename TN, typename = void>
-struct has_member_y : std::false_type {};
-template<typename TN>
-struct has_member_y<TN, decltype(static_cast<void>(&TN::y))> : std::true_type {};
+  template<typename TN, typename = void>
+  struct has_member_y : std::false_type {};
+  template<typename TN>
+  struct has_member_y<TN, decltype(static_cast<void>(&TN::y))> : std::true_type {};
 
-template<typename TN, typename = void>
-struct has_member_z : std::false_type {};
-template<typename TN>
-struct has_member_z<TN, decltype(static_cast<void>(&TN::z))> : std::true_type {};
+  template<typename TN, typename = void>
+  struct has_member_z : std::false_type {};
+  template<typename TN>
+  struct has_member_z<TN, decltype(static_cast<void>(&TN::z))> : std::true_type {};
 
-template<typename TN, typename = void>
-struct has_member_w : std::false_type {};
-template<typename TN>
-struct has_member_w<TN, decltype(static_cast<void>(&TN::w))> : std::true_type {};
+  template<typename TN, typename = void>
+  struct has_member_w : std::false_type {};
+  template<typename TN>
+  struct has_member_w<TN, decltype(static_cast<void>(&TN::w))> : std::true_type {};
 
-template<typename TN>
-inline constexpr bool has_xy_v = has_member_x<TN>::value && has_member_y<TN>::value;
+  template<typename TN>
+  inline constexpr bool has_xy_v = has_member_x<TN>::value && has_member_y<TN>::value;
 
-template<typename TN>
-inline constexpr bool has_xyzw_v = has_xy_v<TN>
+  template<typename TN>
+  inline constexpr bool has_xyzw_v = has_xy_v<TN>
     && has_member_z<TN>::value && has_member_w<TN>::value;
 
-// --- Extract TN's element type (via VecTraits, or TN itself as fallback) ---
+  // --- Extract TN's element type (via VecTraits, or TN itself as fallback) ---
 
-template<typename TN, typename = void>
-struct ElemTypeHelper { using type = TN; };
+  template<typename TN, typename = void>
+  struct ElemTypeHelper { using type = TN; };
 
-template<typename TN>
-struct ElemTypeHelper<TN, std::void_t<typename VecTraits<TN>::elem_type>> {
-  using type = typename VecTraits<TN>::elem_type;
-};
+  template<typename TN>
+  struct ElemTypeHelper<TN, std::void_t<typename VecTraits<TN>::elem_type>> {
+    using type = typename VecTraits<TN>::elem_type;
+  };
 
-template<typename TN>
-using elem_type_t = typename ElemTypeHelper<TN>::type;
+  template<typename TN>
+  using elem_type_t = typename ElemTypeHelper<TN>::type;
 
-// --- Op::apply signature detection ---
+  // --- Op::apply signature detection ---
 
-// Binary: Op::apply(T, T) -> T
-template<typename Op, typename T, typename = void>
-struct Op_is_binary : std::false_type {};
-template<typename Op, typename T>
-struct Op_is_binary<Op, T,
+  // Binary: Op::apply(T, T) -> T
+  template<typename Op, typename T, typename = void>
+  struct Op_is_binary : std::false_type {};
+  template<typename Op, typename T>
+  struct Op_is_binary<Op, T,
     std::void_t<decltype(Op::template apply<T>(
-        std::declval<T>(), std::declval<T>()))>>
+      std::declval<T>(), std::declval<T>()))>>
     : std::true_type {};
 
-// Unary: Op::apply(T&) or Op::apply(T) — accepts a mutable lvalue
-template<typename Op, typename T, typename = void>
-struct Op_is_unary : std::false_type {};
-template<typename Op, typename T>
-struct Op_is_unary<Op, T,
+  // Unary: Op::apply(T&) or Op::apply(T) — accepts a mutable lvalue
+  template<typename Op, typename T, typename = void>
+  struct Op_is_unary : std::false_type {};
+  template<typename Op, typename T>
+  struct Op_is_unary<Op, T,
     std::void_t<decltype(Op::template apply<T>(std::declval<T&>()))>>
     : std::true_type {};
 
@@ -323,22 +327,22 @@ __host__ __device__ void TNApply(TN& A, Fields... fields) {
 
 template<typename Op, typename TN>
 __host__ __device__ std::enable_if_t<
-    detail::has_xyzw_v<TN> && detail::Op_is_binary<Op, detail::elem_type_t<TN>>::value>
-Apply4(TN& A, TN& B, TN& C) {
+  detail::has_xyzw_v<TN>&& detail::Op_is_binary<Op, detail::elem_type_t<TN>>::value>
+  Apply4(TN& A, TN& B, TN& C) {
   TNApply<Op>(A, B, C, &TN::x, &TN::y, &TN::z, &TN::w);
 }
 
 template<typename Op, typename TN>
 __host__ __device__ std::enable_if_t<
-    detail::has_xyzw_v<TN> && detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
-Apply4(TN& A, TN& B) {
+  detail::has_xyzw_v<TN>&& detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
+  Apply4(TN& A, TN& B) {
   TNApply<Op>(A, B, &TN::x, &TN::y, &TN::z, &TN::w);
 }
 
 template<typename Op, typename TN>
 __host__ __device__ std::enable_if_t<
-    detail::has_xyzw_v<TN> && detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
-Apply4(TN& A) {
+  detail::has_xyzw_v<TN>&& detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
+  Apply4(TN& A) {
   TNApply<Op>(A, &TN::x, &TN::y, &TN::z, &TN::w);
 }
 
@@ -348,22 +352,22 @@ Apply4(TN& A) {
 
 template<typename Op, typename TN>
 __host__ __device__ std::enable_if_t<
-    detail::has_xy_v<TN> && detail::Op_is_binary<Op, detail::elem_type_t<TN>>::value>
-Apply2(TN& A, TN& B, TN& C) {
+  detail::has_xy_v<TN>&& detail::Op_is_binary<Op, detail::elem_type_t<TN>>::value>
+  Apply2(TN& A, TN& B, TN& C) {
   TNApply<Op>(A, B, C, &TN::x, &TN::y);
 }
 
 template<typename Op, typename TN>
 __host__ __device__ std::enable_if_t<
-    detail::has_xy_v<TN> && detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
-Apply2(TN& A, TN& B) {
+  detail::has_xy_v<TN>&& detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
+  Apply2(TN& A, TN& B) {
   TNApply<Op>(A, B, &TN::x, &TN::y);
 }
 
 template<typename Op, typename TN>
 __host__ __device__ std::enable_if_t<
-    detail::has_xy_v<TN> && detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
-Apply2(TN& A) {
+  detail::has_xy_v<TN>&& detail::Op_is_unary<Op, detail::elem_type_t<TN>>::value>
+  Apply2(TN& A) {
   TNApply<Op>(A, &TN::x, &TN::y);
 }
 

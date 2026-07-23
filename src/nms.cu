@@ -9,6 +9,7 @@
 // Grid: ceil(num_boxes/256), Block: 256
 // ============================================================
 
+// launch: <<<(num_boxes/256, 1, 1), (256, 1, 1)>>>
 __global__ void nms_kernel(const float* boxes, const float* scores, int* keep,
                            int num_boxes, float iou_threshold) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;

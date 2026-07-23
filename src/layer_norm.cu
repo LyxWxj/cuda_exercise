@@ -50,6 +50,7 @@ template<> struct NormTraits<half> {
 
 // LayerNorm: mean + variance
 template<const int NUM_THREADS>
+// launch: <<<(N, 1, 1), (K, 1, 1)>>>
 __global__ void layer_norm_f32_kernel(float* x, float* y, float g, float b, int N, int K) {
   int tid = threadIdx.x;
   int idx = blockIdx.x * blockDim.x + tid;
@@ -70,6 +71,7 @@ __global__ void layer_norm_f32_kernel(float* x, float* y, float g, float b, int 
 }
 
 template<const int NUM_THREADS>
+// launch: <<<(N, 1, 1), (K/4, 1, 1)>>>
 __global__ void layer_norm_f32x4_kernel(float* x, float* y, float g, float b, int N, int K) {
   int tid = threadIdx.x;
   int idx = (blockIdx.x * blockDim.x + tid) * 4;
@@ -96,6 +98,7 @@ __global__ void layer_norm_f32x4_kernel(float* x, float* y, float g, float b, in
 }
 
 template<const int NUM_THREADS>
+// launch: <<<(N, 1, 1), (K, 1, 1)>>>
 __global__ void layer_norm_f16_f32_kernel(half* x, half* y, float g, float b, int N, int K) {
   int tid = threadIdx.x;
   int idx = blockIdx.x * blockDim.x + tid;
@@ -116,6 +119,7 @@ __global__ void layer_norm_f16_f32_kernel(half* x, half* y, float g, float b, in
 }
 
 template<const int NUM_THREADS>
+// launch: <<<(N, 1, 1), (K/8, 1, 1)>>>
 __global__ void layer_norm_f16x8_pack_f32_kernel(half* x, half* y, float g, float b, int N, int K) {
   int tid = threadIdx.x;
   int idx = (blockIdx.x * blockDim.x + tid) * 8;

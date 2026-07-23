@@ -30,6 +30,7 @@ __device__ __forceinline__ MD warp_reduce_md_op(MD value) {
 
 // F32 scalar
 template<const int NUM_THREADS = 256>
+// launch: <<<(N/K, 1, 1), (K, 1, 1)>>>
 __global__ void softmax_f32_per_token_kernel(float* x, float* y, int N) {
   const int tid = threadIdx.x;
   const int idx = blockIdx.x * blockDim.x + tid;
@@ -40,6 +41,7 @@ __global__ void softmax_f32_per_token_kernel(float* x, float* y, int N) {
 
 // F32x4 vectorized
 template<const int NUM_THREADS = 256 / 4>
+// launch: <<<(N/K, 1, 1), (K/4, 1, 1)>>>
 __global__ void softmax_f32x4_per_token_kernel(float* x, float* y, int N) {
   const int tid = threadIdx.x;
   const int idx = 4 * (blockIdx.x * blockDim.x + tid);

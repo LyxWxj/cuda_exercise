@@ -2,6 +2,7 @@
 
 
 // lauch: <<<(n,1,1),(emb_size,1,1)>>>
+// launch: <<<(N/256, 1, 1), (256, 1, 1)>>>
 __global__ void embedding_f32_kernel(
   const int* idx, float* weight, float* output,
   const int n, const int emb_size) {
@@ -12,6 +13,7 @@ __global__ void embedding_f32_kernel(
 }
 
 // lauch: <<<(n, 1, 1),(emb_size/4, 1, 1)>>>
+// launch: <<<(N/1024, 1, 1), (256, 1, 1)>>>
 __global__ void embedding_f32x4_kernel(
   const int* idx, float* weight, float* output,
   const int n, const int emb_size) {
@@ -23,6 +25,7 @@ __global__ void embedding_f32x4_kernel(
   }
 }
 
+// launch: <<<(N/1024, 1, 1), (256, 1, 1)>>>
 __global__ void embedding_f32x4_pack_kernel(
   const int* idx, float* weight, float* output,
   const int n, const int emb_size) {
@@ -32,6 +35,7 @@ __global__ void embedding_f32x4_pack_kernel(
 }
 
 // lauch: <<<(n,1,1),(emb_size,1,1)>>>
+// launch: <<<(N/256, 1, 1), (256, 1, 1)>>>
 __global__ void embedding_f16_kernel(
   const int* idx, half* weight, half* output, int n, int emb_size) {
   const int tidx = threadIdx.x, bidx = blockIdx.x;
@@ -40,6 +44,7 @@ __global__ void embedding_f16_kernel(
 }
 
 // lauch: <<<(n,1,1),(emb_size/8, 1, 1)>>>
+// launch: <<<(N/2048, 1, 1), (256, 1, 1)>>>
 __global__ void embedding_f16x8_kernel(
   const int* idx, half* weight, half* output, int n, int emb_size) {
   const int tidx = threadIdx.x, bidx = blockIdx.x;
@@ -50,6 +55,7 @@ __global__ void embedding_f16x8_kernel(
   }
 }
 
+// launch: <<<(N/2048, 1, 1), (256, 1, 1)>>>
 __global__ void embedding_f16x8_pack_kernel(
   const int* idx, half* weight, half* output, int n, int emb_size) {
   const int tidx = threadIdx.x, bidx = blockIdx.x;

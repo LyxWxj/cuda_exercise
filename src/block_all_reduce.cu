@@ -51,6 +51,7 @@ struct fp8_e4m3_16 {}; struct fp8_e5m2_16 {}; struct int8_16 {};
 
 // ============================================================
 // Generic block all-reduce sum kernel
+// launch: <<<ceil(N/(Threads*VecW)), Threads>>>
 // ============================================================
 template<typename InputT, typename AccT, int VecWidth, int NUM_THREADS>
 __global__ void block_all_reduce_sum_kernel(
@@ -423,6 +424,7 @@ INSTANTIATE_REDUCE(block_all_reduce_sum_i8x16_pack_i32_kernel, int8_16, int32_t,
 
 // ============================================================
 // Generic block binary-reduce sum kernel
+// launch: <<<ceil(N/(Threads*VecW)), Threads>>>
 // y = sum(ElemOp(a[i], b[i])) via atomicAdd
 //
 // ElemOp: binary op applied per-element (e.g. MulOp for dot product)

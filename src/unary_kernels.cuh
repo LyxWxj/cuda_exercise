@@ -75,6 +75,11 @@ __global__ void unary_f16x8_pack_kernel(half* x, half* y, int N) {
 
 // ============================================================
 // Macro: generate 6 kernel class structs for a unary Op.
+// launch: f32/f16    → <<<(N/256, 1, 1), (256, 1, 1)>>>
+//         f32x4      → <<<(N/1024, 1, 1), (256, 1, 1)>>>
+//         f16x2      → <<<(N/512, 1, 1), (256, 1, 1)>>>
+//         f16x8      → <<<(N/2048, 1, 1), (256, 1, 1)>>>
+//         f16x8_pack → <<<(N/2048, 1, 1), (256, 1, 1)>>>
 // ============================================================
 
 #define _UNARY_KERNEL_CLASS(name, Kernel, ElemType, GridExpr)                 \
